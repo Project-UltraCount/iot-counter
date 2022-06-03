@@ -1,0 +1,4 @@
+import json
+{"RequestId":"60533516-FA07-300C-A4C1-BCA83BA4D129","AssumedRoleUser":{"Arn":"acs:ram::1394721840664016:role/ramosstest/SessionTest","AssumedRoleId":"399190533233866520:SessionTest"},"Credentials":{"SecurityToken":"CAIS9AF1q6Ft5B2yfSjIr5DeGOPxiO1G3/GvR0OElmI/Z/VZmZ3BiTz2IHFFfXhoBOsdtP80lG5W6/walqJIRoReREvCUcZr8sz0JvA9xs2T1fau5Jko1beHewHKeTOZsebWZ+LmNqC/Ht6md1HDkAJq3LL+bk/Mdle5MJqP+/UFB5ZtKWveVzddA8pMLQZPsdITMWCrVcygKRn3mGHdfiEK00he8TokuPjgmJTMtkKA0gGik7Evyt6vcsT+Xa5FJ4xiVtq55utye5fa3TRYgxowr/Yn1f0cpGyc5IrGUwcPvk/eKYjO+9hoNxRla7MmCxa3Ok5LcigSGoABPpHGdhi/A5QWsCH31qoQ+QHoNVhXFHuDeJ7vrie6vrbIPOhF6ORkmRboFBOjmG+uXybddSl24/pF4DrPL4loy8PIsIZBb14uzSXh2br/Qax5LC70X6TBu648VzKyHC4v4zHL/DrMKaenSJn6+jqj4p7EL5VM7rHFHisMFgb++DU=","AccessKeyId":"STS.NSkSYEe2gh3DEe5rbjkzuvXjk","AccessKeySecret":"HN6fkrox5D6a8hQdEb37BggBHBvDE83wynNv5S76jj2j","Expiration":"2021-11-02T02:42:33Z"}}
+
+json.read()

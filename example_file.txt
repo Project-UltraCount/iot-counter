@@ -1,0 +1,10 @@
+# example file
+# -*- coding: utf-8 -*-
+import oss2
+# 分别以HTTP、HTTPS协议访问。
+AccessId = "LTAI5t5jK7G15gb9D7yRMV16"
+AccessKey = "Uy4lVE2ZWqVdZLxWKP7Vl2u7iGvzco"
+endpoint = r"https://oss-ap-southeast-1.aliyuncs.com"
+bucket_name = "projectultracount"
+object_name = "test.txt"
+file_path = r"C:/Users/30847/Desktop/UltraCount_2021/Coding/example_file.txt"
