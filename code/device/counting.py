@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 from threading import Thread
 from device.lcd import lcd_display
-from device_constants import TRIG_1, TRIG_2, ECHO_1, ECHO_2, calibration_offset, min_human_width, reset_threshold, \
+from device.device_constants import TRIG_1, TRIG_2, ECHO_1, ECHO_2, calibration_offset, min_human_width, reset_threshold, \
     detection_threshold, waiting_time, LCD_LINE_1, LCD_LINE_2, max_range, min_range, calibration_samples
 
 
@@ -16,8 +16,10 @@ class Counting:
         if mode in (1,2):
             if mode == 1:
                 self.no_of_pedestrians_1 = 0
+                self.pedestrian_inflow = 0
             if mode == 2:
                 self.no_of_pedestrians_2 = 0
+                self.pedestrian_inflow = 0
             self.count_1 = 0
             self.reset_count_1 = 0
             self.pedestrian_detected_1 = False
@@ -28,10 +30,12 @@ class Counting:
             self.count_1 = 0
             self.reset_count_1 = 0
             self.no_of_pedestrians_1 = 0
+            self.pedestrian_inflow = 0
             self.pedestrian_detected_1 = False
             self.count_2 = 0
             self.reset_count_2 = 0
             self.no_of_pedestrians_2 = 0
+            self.pedestrian_outflow = 0
             self.pedestrian_detected_2 = False
             self.setting_gap_1 = False
             self.setting_gap_2 = False
@@ -105,9 +109,11 @@ class Counting:
                     # distinguish entrance and exit
                     if self.mode == 1:
                         self.no_of_pedestrians_1 += 1
+                        self.pedestrian_inflow += 1
                         lcd_display("Entrance: " + str(no_of_pedestrians), LCD_LINE_2)
                     elif self.mode == 2:
                         self.no_of_pedestrians_2 += 1
+                        self.pedestrian_outflow += 1
                         lcd_display("Exit: " + str(no_of_pedestrians), LCD_LINE_2)
                     self.setting_gap = True
             else:
@@ -165,9 +171,11 @@ class Counting:
             if pseudo_count >= 2:
                 if self.sensor_1_get_time < self.sensor_2_get_time:
                     self.no_of_pedestrians_1 += 1
+                    self.pedestrian_inflow += 1
                     print("In Count: " + str(self.no_of_pedestrians_1))
                 elif self.sensor_1_get_time > self.sensor_2_get_time:
                     self.no_of_pedestrians_2 += 1
+                    self.pedestrian_outflow += 1
                     print("Out Count: " + str(self.no_of_pedestrians_2))
                 pseudo_count = 0
                 self.sensor_1_get_time = self.sensor_2_get_time = time.time()  # reset sensor 1 and sensor 2 time
@@ -257,10 +265,18 @@ class Counting:
     def thread_stop_counting(self):
         self.stop = True
 
-    def get_current_count(self):
+    def get_flow_count(self):
         if self.mode == 1:
-            return self.no_of_pedestrians_1, 0
+            inflow = self.pedestrian_inflow
+            self.pedestrian_inflow = 0 # reset inflow count
+            return inflow, 0
         elif self.mode == 2:
-            return 0, self.no_of_pedestrians_2
+            outflow = self.pedestrian_outflow
+            self.pedestrian_outflow = 0  # reset inflow count
+            return 0, outflow
         elif self.mode == 3:
-            return self.no_of_pedestrians_1, self.no_of_pedestrians_2
+            inflow = self.pedestrian_inflow
+            self.pedestrian_inflow = 0  # reset inflow count
+            outflow = self.pedestrian_outflow
+            self.pedestrian_outflow = 0  # reset inflow count
+            return inflow, outflow

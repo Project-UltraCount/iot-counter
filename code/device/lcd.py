@@ -2,7 +2,7 @@
 # import
 import RPi.GPIO as GPIO
 import time
-from device_constants import LCD_E, LCD_RS, LCD_D4, LCD_D5, LCD_D6, LCD_D7, \
+from device.device_constants import LCD_E, LCD_RS, LCD_D4, LCD_D5, LCD_D6, LCD_D7, \
     LCD_WIDTH, LCD_CMD, LCD_CHR, E_DELAY, E_PULSE, LCD_LINE_1, LCD_LINE_2
 
 GPIO.setwarnings(False)

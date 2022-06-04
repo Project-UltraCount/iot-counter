@@ -15,7 +15,6 @@ def start_upload(mqtt):
         uploading = True
         # 信息获取上报，每20秒钟上报一次系统参数
         while uploading:
-            time.sleep(20)
             # 构建与云端模型一致的消息结构
             updateMsn = {
                 'RunningState': device_properties.RunningState,
@@ -28,6 +27,7 @@ def start_upload(mqtt):
             print(JsonUpdateMsn)
             # 定时向阿里云IOT推送我们构建好的Alink协议数据
             mqtt.push(POST, JsonUpdateMsn)
+            time.sleep(20)
     Thread(target=thread_upload_mqtt).start()
 
 def stop_mqtt():

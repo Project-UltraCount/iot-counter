@@ -10,6 +10,9 @@ ECHO_1 = 33  # 40
 # ultrasonic sensor 2 for exit
 TRIG_2 = 37  # 29
 ECHO_2 = 35  # 31
+# button to restart counting
+BUTTON_1 = 12  # 36
+BUTTON_2 = 21  # 32
 # LED indicating successful Wifi connection
 LED = 29  # 35
 # LCD screen

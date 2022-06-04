@@ -34,29 +34,30 @@ class OSS:
         lcd_display("OSS connected", LCD_LINE_1)
 
     def start_counting(self, device_name=DeviceName):
+        data = str(int(time.time() * 1000)) + " " + str(0) + "\n"
         if self.inflow_outflow_status == 1:
             self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, "")
+            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, data) # event starting time
 
         elif self.inflow_outflow_status == 2:
             self.OSS_object_name_2 = f"{self.event_id}/{device_name}/" + "write_outflow.txt"
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, "")
+            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, data)
 
         elif self.inflow_outflow_status == 3:
             self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
             self.OSS_object_name_2= f"{self.event_id}/{device_name}/" + "write_outflow.txt"
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, "")
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, "")
+            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, data)
+            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, data)
 
-    def append_file(self, no_of_pedestrians_1, no_of_pedestrians_2):
-        data1 = str(int(time.time() * 1000)) + " " + str(no_of_pedestrians_1) + "\n"
-        data2 = str(int(time.time() * 1000)) + " " + str(no_of_pedestrians_2) + "\n"
+    def append_file(self, inflow, outflow):
+        data1 = str(int(time.time() * 1000)) + " " + str(inflow) + "\n"
+        data2 = str(int(time.time() * 1000)) + " " + str(outflow) + "\n"
         if self.inflow_outflow_status == 1:
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
-            print("entrance count appended")
+            print("inflow count appended")
         elif self.inflow_outflow_status == 2:
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
-            print("exit count appended")
+            print("outflow count appended")
         elif self.inflow_outflow_status == 3:
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
@@ -66,7 +67,7 @@ class OSS:
         # update oss file every UPDATE_FREQUENCY time
         while self.updating:
             time.sleep(FILE_UPDATE_FREQUENCY)
-            num1, num2 = counting.get_current_count()
+            num1, num2 = counting.get_flow_count()
             self.append_file(num1, num2)
             print("data string appended")
 

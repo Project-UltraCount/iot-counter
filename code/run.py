@@ -29,33 +29,34 @@ def on_connect(client, userdata, flags, rc):
 
 # device setup
 components.setup()
+components.thread_start_listener()
 components.wifi_check_status()
+
 # 实现设备和iot平台的连接
 Server, ClientId, userName, Password = aliLink.linkiot(DeviceName, ProductKey, DeviceSecret)
 # mqtt连接
 mqtt = mqttd.MQTT(Server, ClientId, userName, Password)
 mqtt.subscribe(SET)  # 订阅服务器下发消息topic
 mqtt.begin(on_message, on_connect)
-start_upload(mqtt) # mqtt上传iot连接信息
+start_upload(mqtt)  # mqtt上传iot连接信息
 
 counter = None
 oss = None
 
-while not device_properties.RunningState:
-    pass
-
 try:
-    while device_properties.RunningState:
+    while not device_properties.RunningState:  # standby mode
+        components.standby()
+
+    while device_properties.RunningState:  # running mode
         oss = OSS(device_properties.EventId, device_properties.InflowOutflowStatus)
         counter = Counting(device_properties.InflowOutflowStatus)
         counter.thread_start_counting()
-        oss.thread_update_oss_file(oss)
+        oss.thread_update_oss_file(counter)
 
     # Close the Connection
     counter.thread_stop_counting()
     oss.thread_stop_update()
     stop_mqtt()
-    clean_up()
 
 except KeyboardInterrupt:
     # Close the Connection
