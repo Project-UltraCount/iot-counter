@@ -6,7 +6,7 @@ from aliyun import aliLink, mqttd
 # 消息回调（云端下发消息的回调函数）
 from aliyun.aliyun_constants import SET, DeviceName, ProductKey, DeviceSecret
 from aliyun.oss import OSS
-from aliyun.property_upload import start_upload, stop_mqtt
+from aliyun.property_upload import start_upload, stop_mqtt, resume_mqtt
 from aliyun.thing_properties import device_properties
 from device import components
 from device.components import clean_up
@@ -26,10 +26,21 @@ def on_message(client, userdata, msg):
 def on_connect(client, userdata, flags, rc):
     pass
 
+def stop_all(counter_thread, oss_thread, components_thread):
+    counter_thread.thread_stop_counting()
+    oss_thread.thread_stop_update()
+    components_thread.thread_stop_listening()
+    stop_mqtt()
+
+def start_all(counter_thread, oss_thread, components_thread):  # resume the device from standby mode
+    counter_thread.thread_resume_counting()
+    oss_thread.thread_resume_update()
+    components_thread.thread_resume_listening()
+    resume_mqtt()
+
 
 # device setup
 components.setup()
-components.thread_start_listener()
 components.wifi_check_status()
 
 # 实现设备和iot平台的连接
@@ -43,24 +54,29 @@ start_upload(mqtt)  # mqtt上传iot连接信息
 counter = None
 oss = None
 
+while not device_properties.RunningState:  # standby mode
+    pass
+
+while device_properties.RunningState:  # running mode
+    components.thread_start_listener() # device starts listening
+    oss = OSS(device_properties.EventId, device_properties.InflowOutflowStatus)
+    counter = Counting(device_properties.InflowOutflowStatus)
+    counter.thread_start_counting()
+    oss.thread_update_oss_file(counter)
+
 try:
-    while not device_properties.RunningState:  # standby mode
-        components.standby()
+    while True:
+        while not device_properties.RunningState:  # standby mode
+            stop_all(counter, oss, components)
+            components.standby()
 
-    while device_properties.RunningState:  # running mode
-        oss = OSS(device_properties.EventId, device_properties.InflowOutflowStatus)
-        counter = Counting(device_properties.InflowOutflowStatus)
-        counter.thread_start_counting()
-        oss.thread_update_oss_file(counter)
-
-    # Close the Connection
-    counter.thread_stop_counting()
-    oss.thread_stop_update()
-    stop_mqtt()
+        while device_properties.RunningState:  # running mode
+            start_all(counter, oss, components)
 
 except KeyboardInterrupt:
     # Close the Connection
     counter.thread_stop_counting()
     oss.thread_stop_update()
+    components.thread_stop_listening()
     stop_mqtt()
     clean_up()

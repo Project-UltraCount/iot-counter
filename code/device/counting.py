@@ -19,7 +19,7 @@ class Counting:
                 self.pedestrian_inflow = 0
             if mode == 2:
                 self.no_of_pedestrians_2 = 0
-                self.pedestrian_inflow = 0
+                self.pedestrian_outflow = 0
             self.count_1 = 0
             self.reset_count_1 = 0
             self.pedestrian_detected_1 = False
@@ -265,6 +265,9 @@ class Counting:
     def thread_stop_counting(self):
         self.stop = True
 
+    def thread_resume_counting(self):
+        self.stop = False
+
     def get_flow_count(self):
         if self.mode == 1:
             inflow = self.pedestrian_inflow
@@ -272,11 +275,11 @@ class Counting:
             return inflow, 0
         elif self.mode == 2:
             outflow = self.pedestrian_outflow
-            self.pedestrian_outflow = 0  # reset inflow count
+            self.pedestrian_outflow = 0  # reset outflow count
             return 0, outflow
         elif self.mode == 3:
             inflow = self.pedestrian_inflow
             self.pedestrian_inflow = 0  # reset inflow count
             outflow = self.pedestrian_outflow
-            self.pedestrian_outflow = 0  # reset inflow count
+            self.pedestrian_outflow = 0  # reset outflow count
             return inflow, outflow

@@ -50,8 +50,9 @@ class OSS:
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, data)
 
     def append_file(self, inflow, outflow):
-        data1 = str(int(time.time() * 1000)) + " " + str(inflow) + "\n"
-        data2 = str(int(time.time() * 1000)) + " " + str(outflow) + "\n"
+        time_data = str(int(time.time() * 1000))
+        data1 = time_data + " " + str(inflow) + "\n"
+        data2 = time_data + " " + str(outflow) + "\n"
         if self.inflow_outflow_status == 1:
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
             print("inflow count appended")
@@ -73,3 +74,6 @@ class OSS:
 
     def thread_stop_update(self):
         self.updating = False
+
+    def thread_resume_update(self):
+        self.updating = True

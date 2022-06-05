@@ -8,6 +8,7 @@ from aliyun.thing_properties import device_properties
 from device.device_constants import LCD_LINE_1, LCD_LINE_2, LED, TRIG_1, TRIG_2, ECHO_1, ECHO_2, BUTTON_1, BUTTON_2
 from device.lcd import lcd_setup, lcd_display, initialisation_success_display, lcd_byte
 
+listening = True
 
 def setup():
     GPIO.setwarnings(False)
@@ -44,34 +45,49 @@ def standby():
     time.sleep(2)
     while not device_properties.RunningState:
         lcd_display("On standby", LCD_LINE_1)
-        lcd_display("Press to restart", LCD_LINE_2)
+        lcd_display("Press to resume", LCD_LINE_2)
         if GPIO.input(BUTTON_1) == GPIO.HIGH:
+            GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             device_properties.RunningState = 1
             break
+        time.sleep(0.0001)
 
 def thread_start_listener():
     GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     GPIO.setup(BUTTON_2, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.add_event_detect(BUTTON_1, GPIO.BOTH, bouncetime=200)
+    GPIO.add_event_detect(BUTTON_2, GPIO.BOTH, bouncetime=200)
+
+    def button_listener():
+        global listening
+        listening = True
+        while listening:
+            if GPIO.event_detected(BUTTON_1):
+                GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                device_properties.RunningState = 0
+                time.sleep(1)
+                lcd_display("1 - Standby", LCD_LINE_1)
+                lcd_display("2 - Quit", LCD_LINE_2)
+
+                while True:
+                    time.sleep(1)  # wait for 1 second
+                    if GPIO.event_detected(BUTTON_1):  # standby
+                        GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                        break
+                    if GPIO.event_detected(BUTTON_2):  # close program
+                        clean_up()
+                        sys.exit()
+            time.sleep(0.0001)  # wait for 1 second
     Thread(target=button_listener).start()
 
 
-def button_listener():
-    while device_properties.RunningState:
-        if GPIO.input(BUTTON_1) == GPIO.HIGH:
-            GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            device_properties.RunningState = 0
-            lcd_display("1 - Standby", LCD_LINE_1)
-            lcd_display("2 - Quit", LCD_LINE_2)
+def thread_stop_listening():
+    global listening
+    listening = False
 
-            while True:
-                time.sleep(1) # wait for 1 second
-                if GPIO.input(BUTTON_1) == GPIO.HIGH:  # standby
-                    GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-                    break
-                if GPIO.input(BUTTON_2) == GPIO.HIGH:  # close program
-                    clean_up()
-                    sys.exit()
-            time.sleep(1) # wait for 1 second
+def thread_resume_listening():
+    global listening
+    listening = True
 
 def clean_up():
     lcd_byte(0x01, False)

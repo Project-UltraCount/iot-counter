@@ -6,7 +6,7 @@ import time
 from aliyun.aliyun_constants import POST
 from aliyun.thing_properties import device_properties
 
-uploading = False
+uploading = True
 
 def start_upload(mqtt):
     def thread_upload_mqtt():
@@ -33,3 +33,7 @@ def start_upload(mqtt):
 def stop_mqtt():
     global uploading
     uploading = False
+
+def resume_mqtt():
+    global uploading
+    uploading = True
