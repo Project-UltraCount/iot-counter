@@ -61,23 +61,25 @@ def thread_start_listener():
     def button_listener():
         global listening
         listening = True
-        while listening:
-            if GPIO.event_detected(BUTTON_1):
-                GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-                device_properties.RunningState = 0
-                time.sleep(1)
-                lcd_display("1 - Standby", LCD_LINE_1)
-                lcd_display("2 - Quit", LCD_LINE_2)
+        while True:
+            while listening:
+                if GPIO.event_detected(BUTTON_1):
+                    GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                    device_properties.RunningState = 0
+                    time.sleep(1)
+                    lcd_display("1 - Standby", LCD_LINE_1)
+                    lcd_display("2 - Quit", LCD_LINE_2)
 
-                while True:
-                    time.sleep(1)  # wait for 1 second
-                    if GPIO.event_detected(BUTTON_1):  # standby
-                        GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-                        break
-                    if GPIO.event_detected(BUTTON_2):  # close program
-                        clean_up()
-                        sys.exit()
-            time.sleep(0.0001)  # wait for 1 second
+                    while True:
+                        time.sleep(1)  # wait for 1 second
+                        if GPIO.event_detected(BUTTON_1):  # standby
+                            GPIO.setup(BUTTON_1, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                            break
+                        if GPIO.event_detected(BUTTON_2):  # close program
+                            clean_up()
+                            sys.exit()
+                time.sleep(0.5)  # wait for 1 second
+            time.sleep(0.5)
     Thread(target=button_listener).start()
 
 
@@ -90,6 +92,7 @@ def thread_resume_listening():
     listening = True
 
 def clean_up():
+
     lcd_byte(0x01, False)
     lcd_display("Counting Ended", LCD_LINE_1)
     print("Counting ended")

@@ -2,6 +2,7 @@
 ProductKey = 'ha9aL7yJNmT'
 DeviceName = 'device1'
 DeviceSecret = "babcc07ff58e24027b954b30545375b3"
+iotInstanceId = 'iot-06z00dqdyd9a3m8'
 
 # topic (iot后台获取)
 POST = '/sys/ha9aL7yJNmT/device1/thing/event/property/post'  # 上报消息到云

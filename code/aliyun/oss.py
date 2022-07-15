@@ -1,3 +1,5 @@
+import threading
+
 import oss2
 import time
 
@@ -18,6 +20,7 @@ class OSS:
         self.__connect_oss(id, key, endpoint, bucket_name)
         self.__initialise_oss(device_name)
         self.start_counting()
+        self.bucket_name = bucket_name
 
     def __connect_oss(self, id, key, endpoint, bucket_name):
         # Aliyun account and accessKey
@@ -33,44 +36,45 @@ class OSS:
         device_properties.OssConnectionState = 1
         lcd_display("OSS connected", LCD_LINE_1)
 
+    def get_file_size(self, object_name):
+        return self.bucket.get_object_meta(object_name).headers['Content-Length']
+
     def start_counting(self, device_name=DeviceName):
-        data = str(int(time.time() * 1000)) + " " + str(0) + "\n"
-        if self.inflow_outflow_status == 1:
+        data = f'{int(time.time() * 1000)} 0\n'
+        if self.inflow_outflow_status in ("1", "3"):
             self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, data) # event starting time
+            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.get_file_size(self.OSS_object_name_1), data) # event starting time
 
-        elif self.inflow_outflow_status == 2:
+        elif self.inflow_outflow_status in ("2", "3"):
             self.OSS_object_name_2 = f"{self.event_id}/{device_name}/" + "write_outflow.txt"
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, data)
-
-        elif self.inflow_outflow_status == 3:
-            self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
-            self.OSS_object_name_2= f"{self.event_id}/{device_name}/" + "write_outflow.txt"
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, 0, data)
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, 0, data)
+            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.get_file_size(self.OSS_object_name_2), data)
 
     def append_file(self, inflow, outflow):
         time_data = str(int(time.time() * 1000))
         data1 = time_data + " " + str(inflow) + "\n"
         data2 = time_data + " " + str(outflow) + "\n"
-        if self.inflow_outflow_status == 1:
+        if self.inflow_outflow_status == "1":
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
             print("inflow count appended")
-        elif self.inflow_outflow_status == 2:
+        elif self.inflow_outflow_status == "2":
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
             print("outflow count appended")
-        elif self.inflow_outflow_status == 3:
+        elif self.inflow_outflow_status == "3":
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
             print("both counts appended")
 
     def thread_update_oss_file(self, counting):
-        # update oss file every UPDATE_FREQUENCY time
-        while self.updating:
-            time.sleep(FILE_UPDATE_FREQUENCY)
-            num1, num2 = counting.get_flow_count()
-            self.append_file(num1, num2)
-            print("data string appended")
+        def work():
+            # update oss file every UPDATE_FREQUENCY time
+            while True:
+                while self.updating:
+                    num1, num2 = counting.get_flow_count()
+                    self.append_file(num1, num2)
+                    print("data string appended")
+                    time.sleep(FILE_UPDATE_FREQUENCY)
+                time.sleep(0.5)
+        threading.Thread(target=work).start()
 
     def thread_stop_update(self):
         self.updating = False
