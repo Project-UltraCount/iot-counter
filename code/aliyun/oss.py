@@ -37,7 +37,10 @@ class OSS:
         lcd_display("OSS connected", LCD_LINE_1)
 
     def get_file_size(self, object_name):
-        return self.bucket.get_object_meta(object_name).headers['Content-Length']
+        try:
+            return self.bucket.get_object_meta(object_name).headers['Content-Length']
+        except:
+            return 0
 
     def start_counting(self, device_name=DeviceName):
         data = f'{int(time.time() * 1000)} 0\n'
@@ -45,7 +48,8 @@ class OSS:
             self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
             self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.get_file_size(self.OSS_object_name_1), data) # event starting time
 
-        elif self.inflow_outflow_status in ("2", "3"):
+        if self.inflow_outflow_status in ("2", "3"):
+            print(self.inflow_outflow_status)
             self.OSS_object_name_2 = f"{self.event_id}/{device_name}/" + "write_outflow.txt"
             self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.get_file_size(self.OSS_object_name_2), data)
 

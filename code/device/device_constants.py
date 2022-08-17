@@ -37,12 +37,13 @@ E_DELAY = 0.0005
 
 # constants for ultrasonic detection
 timeout = 0.0180  # about 3 meters
-waiting_time = 0.00003  # 30 microseconds
+waiting_time = 0.0003  # 300 microseconds
 detection_threshold = 4
 abortion_threshold = 1000
-calibration_samples = 100
+calibration_samples = 500
 max_range = 300  # 3 meters
 min_range = 70  # min_range can be adjusted according to the estimated distance
 min_human_width = 30  # 30cm
-reset_threshold = 4  # no of times the range is back to normal
+uni_reset_threshold = 4  # no of times the range is back to normal for unidirectional counting
+bi_reset_threshold = 6  # no of times the range is back to normal for bidirectional counting
 calibration_offset = 0.00064  # calibration for ultrasonic distance measuring

@@ -2,8 +2,9 @@ import RPi.GPIO as GPIO
 import time
 from threading import Thread
 from device.lcd import lcd_display
-from device.device_constants import TRIG_1, TRIG_2, ECHO_1, ECHO_2, calibration_offset, min_human_width, reset_threshold, \
-    detection_threshold, waiting_time, LCD_LINE_1, LCD_LINE_2, max_range, min_range, calibration_samples
+from device.device_constants import TRIG_1, TRIG_2, ECHO_1, ECHO_2, calibration_offset, min_human_width, \
+    uni_reset_threshold, bi_reset_threshold, detection_threshold, waiting_time, LCD_LINE_1, LCD_LINE_2, \
+    max_range, min_range, calibration_samples
 
 
 class Counting:
@@ -12,6 +13,7 @@ class Counting:
         self.a1 = Thread(target=self.uni_counting)
         self.a2 = Thread(target=self.bi_counting)
         self.mode = mode
+
         # constants to be declared
         if mode in ("1","2"):
             if mode == "1":
@@ -37,11 +39,11 @@ class Counting:
             self.no_of_pedestrians_2 = 0
             self.pedestrian_outflow = 0
             self.pedestrian_detected_2 = False
-            self.setting_gap_1 = False
-            self.setting_gap_2 = False
             self.no_of_pedestrians_total = 0
             self.sensor_1_get_time = 0
             self.sensor_2_get_time = 0
+            self.setting_gap_1 = False
+            self.setting_gap_2 = False
             self.__calibration_start_sensor(1)
             self.__calibration_start_sensor(2)
 
@@ -124,7 +126,7 @@ class Counting:
                         self.reset_count_1 = 0
                     elif distance_1 > self.average_dist_1 - min_human_width and self.pedestrian_detected_1: # no obstacles
                         self.reset_count_1 += 1
-                        if self.reset_count_1 >= reset_threshold:
+                        if self.reset_count_1 >= uni_reset_threshold:
                             self.reset_counter(1)
                             self.setting_gap = False
 
@@ -150,6 +152,10 @@ class Counting:
                     if distance_1 < self.average_dist_1 - min_human_width:
                         self.count_1 += 1
                         self.reset_count_1 = 0
+                    elif self.pedestrian_detected_1:
+                        self.reset_count_1 += 1
+                        if self.reset_count_1 >= bi_reset_threshold:
+                            self.reset_counter(1)
                     else:
                         self.count_1 = 0
                     if self.count_1 >= detection_threshold and not self.pedestrian_detected_1:
@@ -157,7 +163,6 @@ class Counting:
                         self.setting_gap_1 = True
                         self.pedestrian_detected_1 = True
                         self.sensor_1_get_time = time.time()
-                        print("sensor 1 gets it")
                     else:
                         pass
                 else:
@@ -165,13 +170,10 @@ class Counting:
                         self.reset_count_1 = 0
                     elif distance_1 > self.average_dist_1 - min_human_width and self.pedestrian_detected_1:
                         self.reset_count_1 += 1
-                        if self.reset_count_1 >= reset_threshold:
+                        if self.reset_count_1 >= bi_reset_threshold:
                             pseudo_count = 0
                             self.reset_counter(1)
                             self.setting_gap_1 = False
-                            print("sensor 1 resets")
-
-                time.sleep(waiting_time)
 
                 # identify direction from time difference
                 if pseudo_count >= 2:
@@ -185,7 +187,8 @@ class Counting:
                         print("Out Count: " + str(self.no_of_pedestrians_2))
                     pseudo_count = 0
                     self.sensor_1_get_time = self.sensor_2_get_time = time.time()  # reset sensor 1 and sensor 2 time
-                    self.reset_counter(2)  # reset counting constants
+                    self.count_1 = self.reset_count_1 = 0
+                    self.count_2 = self.reset_count_2 = 0  # reset counting constants
                     lcd_display("In: " + str(self.no_of_pedestrians_1) + " Out: "
                                 + str(self.no_of_pedestrians_2), LCD_LINE_1)
                     lcd_display("Total: " + str(self.no_of_pedestrians_1 - self.no_of_pedestrians_2),
@@ -194,10 +197,12 @@ class Counting:
                 else:
                     pass
 
+                time.sleep(waiting_time)
+
                 # sensor 2
                 t2 = time.time()
                 GPIO.output(TRIG_2, GPIO.HIGH)
-                time.sleep(0.00001)
+                time.sleep(0.00002)
                 GPIO.output(TRIG_2, GPIO.LOW)
                 GPIO.wait_for_edge(ECHO_2, GPIO.FALLING, timeout=24)
                 duration_2 = time.time() - t2 - calibration_offset
@@ -209,7 +214,7 @@ class Counting:
                         self.reset_count_2 = 0
                     elif self.pedestrian_detected_2:
                         self.reset_count_2 += 1
-                        if self.reset_count_2 >= reset_threshold:
+                        if self.reset_count_2 >= bi_reset_threshold:
                             self.reset_counter(2)
                     else:
                         self.count_2 = 0
@@ -218,7 +223,6 @@ class Counting:
                         self.setting_gap_2 = True
                         self.pedestrian_detected_2 = True
                         self.sensor_2_get_time = time.time()
-                        print("sensor 2 gets it")
                     else:
                         pass
                 else:
@@ -226,30 +230,33 @@ class Counting:
                         self.reset_count_2 = 0
                     elif distance_2 > self.average_dist_2 - min_human_width and self.pedestrian_detected_2:
                         self.reset_count_2 += 1
-                        if self.reset_count_2 >= reset_threshold:
+                        if self.reset_count_2 >= bi_reset_threshold:
                             pseudo_count = 0
                             self.reset_counter(2)
                             self.setting_gap_2 = False
-                            print("sensor 2 resets")
 
                 # identify direction from time difference
                 if pseudo_count >= 2:
                     if self.sensor_1_get_time < self.sensor_2_get_time:
                         self.no_of_pedestrians_1 += 1
+                        self.pedestrian_inflow += 1
                         print("In Count: " + str(self.no_of_pedestrians_1))
                     elif self.sensor_1_get_time > self.sensor_2_get_time:
                         self.no_of_pedestrians_2 += 1
+                        self.pedestrian_outflow += 1
                         print("Out Count: " + str(self.no_of_pedestrians_2))
                     pseudo_count = 0
                     self.sensor_1_get_time = self.sensor_2_get_time = time.time()  # reset sensor 1 and sensor 2 time
-                    self.reset_counter(1)  # reset counting constants
+                    self.count_1 = self.reset_count_1 = 0
+                    self.count_2 = self.reset_count_2 = 0 # reset counting constants
                     lcd_display("In: " + str(self.no_of_pedestrians_1) + " Out: "
                                 + str(self.no_of_pedestrians_2), LCD_LINE_1)
-                    lcd_display("Combined: " + str(self.no_of_pedestrians_1 - self.no_of_pedestrians_2),
+                    lcd_display("Total: " + str(self.no_of_pedestrians_1 - self.no_of_pedestrians_2),
                                 LCD_LINE_2)
                     print("Combined count: " + str(self.no_of_pedestrians_1 - self.no_of_pedestrians_2))
                 else:
                     pass
+
                 time.sleep(waiting_time)
 
     def reset_counter(self, mode):
