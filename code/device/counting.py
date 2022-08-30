@@ -10,16 +10,14 @@ from device.device_constants import TRIG_1, TRIG_2, ECHO_1, ECHO_2, calibration_
 class Counting:
     def __init__(self, mode):
         self.stop = False
-        self.a1 = Thread(target=self.uni_counting)
-        self.a2 = Thread(target=self.bi_counting)
-        self.mode = mode
-
+        self.mode = str(mode)
+        del mode
         # constants to be declared
-        if mode in ("1","2"):
-            if mode == "1":
+        if self.mode in ("1","2"):
+            if self.mode == "1":
                 self.no_of_pedestrians_1 = 0
                 self.pedestrian_inflow = 0
-            if mode == "2":
+            if self.mode == "2":
                 self.no_of_pedestrians_2 = 0
                 self.pedestrian_outflow = 0
             self.count_1 = 0
@@ -27,8 +25,9 @@ class Counting:
             self.pedestrian_detected_1 = False
             self.setting_gap = False
             self.__calibration_start_sensor(1)
+            self.a1 = Thread(target=self.uni_counting)
 
-        elif mode == "3":
+        elif self.mode == "3":
             self.count_1 = 0
             self.reset_count_1 = 0
             self.no_of_pedestrians_1 = 0
@@ -46,6 +45,7 @@ class Counting:
             self.setting_gap_2 = False
             self.__calibration_start_sensor(1)
             self.__calibration_start_sensor(2)
+            self.a2 = Thread(target=self.bi_counting)
 
     def __calibration_start_sensor(self, sensor_no):
         echo = trig = 0
@@ -98,7 +98,6 @@ class Counting:
                 GPIO.wait_for_edge(ECHO_1, GPIO.FALLING, timeout=24)
                 duration_1 = time.time() - t1 - calibration_offset
                 distance_1 = round(duration_1 * 17150, 2)
-                print(distance_1)
 
                 if not self.setting_gap:
                     if distance_1 < self.average_dist_1 - min_human_width: # detected obstacles

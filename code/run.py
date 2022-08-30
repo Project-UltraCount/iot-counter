@@ -26,11 +26,6 @@ def on_message(client, userdata, msg):
 
 # 连接回调（与阿里云建立链接后的回调函数）
 def on_connect(client, userdata, flags, rc):
-    params = get_device_properties()
-    device_properties.RunningState = params['RunningState']
-    device_properties.EventId = params['EventId']
-    device_properties.InflowOutflowStatus = params['InflowOutflowStatus']
-    print(params)
     global mqtt_connected
     mqtt_connected = True
     start_upload(mqtt)
@@ -40,7 +35,6 @@ def stop_all(counter_thread, oss_thread, components_thread):
     counter_thread.thread_stop_counting()
     oss_thread.thread_stop_update()
     components_thread.thread_stop_listening()
-    stop_mqtt()
 
 # resume all threads
 def resume_all(counter_thread, oss_thread, components_thread):  # resume the device from standby mode
@@ -61,14 +55,8 @@ mqtt = mqttd.MQTT(Server, ClientId, userName, Password)
 mqtt.subscribe(SET)  # 订阅服务器下发消息topic
 mqtt.begin(on_message, on_connect)
 
-params = get_device_properties()
-device_properties.RunningState = params['RunningState']
-device_properties.EventId = params['EventId']
-device_properties.InflowOutflowStatus = params['InflowOutflowStatus']
-print(params)
-
 while not mqtt_connected:
-    sleep(0.5)
+    time.sleep(0.5)
 
 counter = None
 oss = None
@@ -77,9 +65,9 @@ device_properties.RunningState = 0
 upload()
 
 while not device_properties.RunningState:  # standby mode
-    sleep(0.5)
+    time.sleep(0.5)
 
-components.thread_start_listener() # device starts listening
+components.thread_start_listener()  # device starts listening
 oss = OSS(device_properties.EventId, device_properties.InflowOutflowStatus)
 counter = Counting(device_properties.InflowOutflowStatus)
 counter.thread_start_counting()
@@ -88,14 +76,14 @@ oss.thread_update_oss_file(counter)
 try:
     while True:
         while device_properties.RunningState:  # standby mode
-            sleep(0.5)
+            time.sleep(0.5)
         stop_all(counter, oss, components)
         components.standby()
 
         while not device_properties.RunningState:  # running mode
-            sleep(0.5)
+            time.sleep(0.5)
         resume_all(counter, oss, components)
-        sleep(0.5)
+        time.sleep(0.5)
 finally:
     # reset running state to zero
     device_properties.RunningState = 0

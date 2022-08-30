@@ -2,6 +2,7 @@
 
 # pip install paho-mqtt
 import paho.mqtt.client
+import time
 
 # =====初始化======
 from device.device_constants import LCD_LINE_2
@@ -31,8 +32,9 @@ class MQTT:
     # =====发送消息==========
     def push(self, tag, date, _Qos=0):
         self.mqttc.publish(tag, date, _Qos)
-        # print('OK',date)
 
     # =======订阅tips=====
     def subscribe(self, _tag):
         self.mqttc.subscribe(_tag)  # 监听标签
+
+

@@ -14,7 +14,8 @@ class OSS:
                  endpoint=OSS_endpoint, bucket_name=OSS_bucket_name):
         self.event_id = event_id
         self.updating = True
-        self.inflow_outflow_status = inflow_outflow_status
+        self.inflow_outflow_status = str(inflow_outflow_status)
+        del inflow_outflow_status
         self.OSS_object_name_1 = self.OSS_object_name_2 = ""
         self.write_inflow = self.write_outflow = None
         self.__connect_oss(id, key, endpoint, bucket_name)
@@ -41,32 +42,47 @@ class OSS:
             return self.bucket.get_object_meta(object_name).headers['Content-Length']
         except:
             return 0
-
+   
     def start_counting(self, device_name=DeviceName):
         data = f'{int(time.time() * 1000)} 0\n'
         if self.inflow_outflow_status in ("1", "3"):
             self.OSS_object_name_1 = f"{self.event_id}/{device_name}/" + "write_inflow.txt"
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.get_file_size(self.OSS_object_name_1), data) # event starting time
+            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1,
+                                                          self.get_file_size(self.OSS_object_name_1),
+                                                          data)  # event starting time
 
         if self.inflow_outflow_status in ("2", "3"):
-            print(self.inflow_outflow_status)
             self.OSS_object_name_2 = f"{self.event_id}/{device_name}/" + "write_outflow.txt"
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.get_file_size(self.OSS_object_name_2), data)
+            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2,
+                                                           self.get_file_size(self.OSS_object_name_2), data)
+
+    @staticmethod
+    def append_object_helper(bucket, object_name, next_position, data):
+        cnt = 0
+        while True:
+            ret = bucket.append_object(object_name, next_position, data)  # event starting time
+            if ret.status < 300:
+                break
+            cnt += 1
+            print(f"network error, retrying...  {cnt}, status code={ret.status}")
+            time.sleep(4)
+        return ret
 
     def append_file(self, inflow, outflow):
         time_data = str(int(time.time() * 1000))
         data1 = time_data + " " + str(inflow) + "\n"
         data2 = time_data + " " + str(outflow) + "\n"
-        if self.inflow_outflow_status == "1":
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
+        print(data2)
+        print(self.inflow_outflow_status)
+        print(type(self.inflow_outflow_status))
+        if self.inflow_outflow_status in ("1","3"):
+            self.write_inflow = self.append_object_helper(self.bucket,self.OSS_object_name_1, self.write_inflow.next_position, data1)
             print("inflow count appended")
-        elif self.inflow_outflow_status == "2":
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
+
+        if self.inflow_outflow_status in ("2","3"):
+            print("@@@@@@")
+            self.write_outflow = self.append_object_helper(self.bucket,self.OSS_object_name_2, self.write_outflow.next_position, data2)
             print("outflow count appended")
-        elif self.inflow_outflow_status == "3":
-            self.write_inflow = self.bucket.append_object(self.OSS_object_name_1, self.write_inflow.next_position, data1)
-            self.write_outflow = self.bucket.append_object(self.OSS_object_name_2, self.write_outflow.next_position, data2)
-            print("both counts appended")
 
     def thread_update_oss_file(self, counting):
         def work():

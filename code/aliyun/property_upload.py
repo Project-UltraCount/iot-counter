@@ -9,18 +9,19 @@ from aliyun.thing_properties import device_properties
 uploading = True
 mqtt = None
 
+thread = None
 def start_upload(_mqtt):
     global mqtt
-    def thread_upload_mqtt():
-        global uploading
-        uploading = True
-        # 信息获取上报，每20秒钟上报一次系统参数
-        while True:
-            while uploading:
-                upload()
-                time.sleep(20)
+    global thread
     mqtt = _mqtt
-    Thread(target=thread_upload_mqtt).start()
+    def thread_upload():
+        while True:
+            if uploading:
+                upload()
+            time.sleep(1)
+    if thread is None:
+        thread = Thread(target=thread_upload)
+        thread.start()
 
 def upload():
     # 构建与云端模型一致的消息结构
@@ -32,10 +33,9 @@ def upload():
         'OssConnectionState': device_properties.OssConnectionState
     }
     JsonUpdateMsn = aliLink.Alink(updateMsn)
-    print(JsonUpdateMsn)
     # 定时向阿里云IOT推送我们构建好的Alink协议数据
     mqtt.push(POST, JsonUpdateMsn)
-
+    print(JsonUpdateMsn)
 
 def stop_mqtt():
     global uploading

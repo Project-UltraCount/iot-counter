@@ -15,5 +15,5 @@ def get_device_properties():
     result = clt.do_action_with_exception(request)
     json_props = json.loads(result.decode())
 
-    mapping = {elem['Identifier']: elem['Value'] for elem in json_props['Data']['List']['PropertyStatusInfo']}
+    mapping = {elem['Identifier'] : elem['Value'] for elem in json_props['Data']['List']['PropertyStatusInfo']}
     return mapping
