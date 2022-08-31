@@ -22,13 +22,7 @@ class DeviceProperties:
                     json.dump(self.__dict__, f)
                 time.sleep(5)
                 
-        def tmp():
-            while 1:
-                print(self.__dict__)
-                time.sleep(1)
-                
         Thread(target=cache).start()
-        Thread(target=tmp).start()
         
     @property
     def IpAddress(self):
