@@ -1,5 +1,9 @@
+<div align="center">
+<img src="https://lh3.googleusercontent.com/u/0/drive-viewer/AKGpihZXHeCXMa1yxSLgbDliJsMKSWv8MLf8mYok-g1r9zyJXBlb_aHXvVn1KgZppzrv_qSFZbhu5P92Th19BJ0Hx8SILFriTy-Ih38=w1195-h1347" width=100/>
+
 # Project UltraCount
 **(formerly named Project IREye)**
+</div>
 
 <span><p style="color: red;">_**This is code for the hardware counters.**_</p></span>
 
@@ -54,7 +58,7 @@ Our project was successfully completed and has been regularly used by the school
 - **Cloud Service**: Aliyun Object Storage Service
 
 ## Contact
-For more information, please contact [hl653@cam.ac.uk].
+For more information, please contact <a href="mailto:hl653@cam.ac.uk">Hongyi Lin</a> or <a href="mailto:e1155799@u.nus.edu">Zhu Tianyi</a>.
 
 ---
 
