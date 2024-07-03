@@ -54,7 +54,7 @@ Our project was successfully completed and has been regularly used by the school
 ## Technologies Used
 - **Hardware**: Raspberry Pi, Ultrasonic Sensors
 - **Software**: Python, Java, Android SDK
-- **Protocols**: API for IoT integration, MQTT
+- **Protocols**: MQTT Protocol, Aliyun IoT Platform
 - **Cloud Service**: Aliyun Object Storage Service
 
 ## Contact
